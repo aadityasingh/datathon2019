@@ -14,11 +14,7 @@ from models import GasTempNet
 from datasets import make_data_loaders
 from train import Trainer
 
-gases = ['TS04', 'TNH4', 'CA', 'MG', 'NA', 'K', 'CL', 'NSO4', 'NHNO3', 'WSO2', 'WNO3']
 # gases = list(range(6, 16))
-
-input_size = len(gases)
-output_size = 1
 
 def create_parser():
     parser = argparse.ArgumentParser()
@@ -29,10 +25,11 @@ def create_parser():
     parser.add_argument('--lr_step', type=int, default=1)
     parser.add_argument('--hidden_dim', type=int, default=10)
     parser.add_argument('--decay', type=float, default=0.995)
+    parser.add_argument('--remove', nargs='*', default=[])
 
     return parser
 
-def train(fname, opts):
+def train(fname, opts, input_size, output_size, gases):
     training_params = {'num_epochs' : opts.epochs, 'learning_rate' : opts.lr, 'weight_decay' : 0.3, 
         'learning_rate_decay' : opts.decay, 'learning_rate_step': opts.lr_step, 'cuda' : False, 
         'summary_dir' : './runs/logs/', 'checkpoint_dir' : './runs/checkpoints/', 'hidden_dim': opts.hidden_dim}
@@ -55,5 +52,14 @@ def train(fname, opts):
 if __name__ == "__main__":
     parser = create_parser()
     opts = parser.parse_args()
+    
+    gases = ['TSO4', 'TNH4', 'CA', 'MG', 'NA', 'K', 'CL', 'NSO4', 'NHNO3', 'WSO2', 'WNO3']
+    for to_r in opts.remove:
+        gases.remove(to_r)
+    input_size = len(gases)
+    output_size = 1
+    print(gases)
+    train('../data_filled.csv', opts, input_size, output_size, gases)
 
-    train('../filter_pack_concentrations_weekly_cleaned.csv', opts)
+
+

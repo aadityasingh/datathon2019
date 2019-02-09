@@ -27,7 +27,7 @@ class Trainer:
             model: 
             params: hyperparameters and other settings
         """
-        self.model = model
+        self.model = model.double()
         self.params = params
         self.params['start_epoch'] = 0
 
@@ -48,15 +48,20 @@ class Trainer:
             print("epoch {}...".format(epoch))
             for batch_idx, batch in enumerate(tqdm(self.train_loader)):
                 data = batch['input_vec']
+                # print(data.shape)
                 target = batch['output_num']
+                # print(target.shape)
                 # if torch.cuda.is_available():
                 #     print('using GPU')
                 #     data = data.cuda()
                 data = Variable(data)
+                # print(data)
+                # print(target)
 
                 self.optimizer.zero_grad()
                 pred = self.model.forward(data)
                 loss = self.loss(pred, target)
+                # print(loss)
                 loss.backward()
                 self.optimizer.step()
                 loss_list.append(loss.data[0].item())
@@ -65,7 +70,7 @@ class Trainer:
             new_lr = self.adjust_learning_rate(epoch)
             print('learning rate:', new_lr)
 
-            if epoch % (opts.test_every//2) == 0:
+            if epoch % (opts.test_every) == 0:
                 new_loss = self.test(epoch)
                 if new_loss < last_loss:
                     self.save_checkpoint({
@@ -92,8 +97,10 @@ class Trainer:
         test_loss = 0
         mse_loss = 0
         kld_loss = 0
-        for i, row in enumerate(self.test_loader):
-            data, target = row[:, :-1], row[:, -1]
+        for batch_idx, batch in enumerate(tqdm(self.test_loader)):
+            data = batch['input_vec']
+            # print(data.shape)
+            target = batch['output_num']
             # if torch.cuda.is_available():
             #     data = data.cuda()
             data = Variable(data)

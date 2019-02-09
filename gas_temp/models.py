@@ -19,5 +19,5 @@ class GasTempNet(nn.Module):
 
     def forward(self, x):
         out = F.relu(self.input(x))
-        out = self.output(x)
+        out = self.output(out)[:, 0]
         return out
