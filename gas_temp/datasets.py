@@ -2,7 +2,6 @@ from __future__ import print_function, division
 import os
 import torch
 import pandas as pd
-from skimage import io, transform
 import numpy as np
 from torch.utils.data import Dataset
 from torch.utils.data.sampler import SubsetRandomSampler
@@ -23,7 +22,7 @@ class GasTempDataset(Dataset):
         return sample
 
 def make_data_loaders(path, ins, batch_size=16, val_split=0.2, thresh=None):
-    dataset = GasTempDataset(my_path)
+    dataset = GasTempDataset(path, ins)
 
     # Creating data indices for training and validation splits:
     dataset_size = len(dataset)
