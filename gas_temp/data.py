@@ -1,9 +1,11 @@
 import os
+import copy
 import torch
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, SubsetRandomSampler
+import numpy as np
 import pandas as pd
 
-def is_valid_split(data_split, data_split, random_seed):
+def is_valid_split(data_split):
     if len(data_split) == 2:
         for ratio in data_split:
             if ratio < 0 or ratio > 1:
@@ -16,13 +18,18 @@ def is_valid_split(data_split, data_split, random_seed):
         return data_split[0] + data_split[1] + data_split[2] == 1
     return False
 
-def load_data(df):
+def load_data(df, data_split, num_workers=4, pin_memory=False):
     if is_valid_split(data_split):
         train_size = data_split[0]
         valid_size = data_split[1]
     else:
         print("value error")
         raise ValueError("data_split is not correctly formatted")
+
+    # Pandas dataframe to PyTorch tensor
+    train_dataset = torch.tensor(df.values)
+    valid_dataset = torch.tensor(copy.deepcopy(df.values))
+    test_dataset = torch.tensor(copy.deepcopy(df.values))
 
     # shuffles and splits indices into the train, validation, and test data sets
     num_imgs = len(train_dataset)
@@ -34,20 +41,17 @@ def load_data(df):
     sampler_valid = SubsetRandomSampler(indices_valid)
     sampler_test = SubsetRandomSampler(indices_test)
 
-    # Pandas dataframe to PyTorch tensor
-    dataset = torch.tensor(df.values)
-
     # Create DataLoaders
-    self.train_loader = DataLoader(
-        dataset, batch_size=batch_size, sampler=sampler_train, 
+    train_loader = DataLoader(
+        train_dataset, sampler=sampler_train, 
         num_workers=num_workers, pin_memory=pin_memory,
     )
-    self.valid_loader = DataLoader(
-        dataset, batch_size=batch_size, sampler=sampler_valid, 
+    valid_loader = DataLoader(
+        valid_dataset, sampler=sampler_valid, 
         num_workers=num_workers, pin_memory=pin_memory,
     )
-    self.test_loader = DataLoader(
-        dataset, batch_size=batch_size, sampler=sampler_test, 
+    test_loader = DataLoader(
+        test_dataset, sampler=sampler_test, 
         num_workers=num_workers, pin_memory=pin_memory,
     )
 
