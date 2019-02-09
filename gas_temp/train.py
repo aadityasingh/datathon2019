@@ -1,39 +1,33 @@
-
-import torchvision.utils as tvut
-
-from torch.autograd import Variable
-from tensorboardX import SummaryWriter
-import shutil
-from tqdm import tqdm
-import numpy as np
-import utils
-
-import os
 import pdb
-import pickle
-import argparse
-
-import warnings
-warnings.filterwarnings("ignore")
 
 # Torch imports
 import torch
 import torch.nn as nn
-import torch.optim as optim
+import torch.optim
+from torch.autograd import Variable
 
 # Numpy & Scipy imports
 import numpy as np
 import scipy
 import scipy.misc
 
+from tensorboardX import SummaryWriter
+import shutil
+from tqdm import tqdm
+
+import warnings
+warnings.filterwarnings("ignore")
 
 # torch.set_default_tensor_type('torch.cuda.FloatTensor')
 
 class Trainer:
     def __init__(self, model, train_loader, test_loader, params):
-        self.model = nn.Sequential(nn.Linear(len(sources), hidden_dim),
-                                    nn.ReLU(),
-                                    nn.Linear(params['hidden_dim'], n_out))
+        """
+        Args:
+            model: 
+            params: hyperparameters and other settings
+        """
+        self.model = model
         self.params = params
         self.params['start_epoch'] = 0
 
@@ -42,24 +36,26 @@ class Trainer:
 
         self.loss = nn.MSELoss()
         self.optimizer = self.get_optimizer()
-        # print()
+
         self.summary_writer = SummaryWriter(log_dir=self.params['summary_dir'])
 
     def train(self, opts):
         self.model.train()
-        last_loss = 10000000
+        last_loss = float('inf')
         save_new_checkpoint = False
         for epoch in range(self.params['start_epoch'], self.params['num_epochs']):
             loss_list = []
             print("epoch {}...".format(epoch))
-            for batch_idx, (data, _) in enumerate(tqdm(self.train_loader)):
+            for batch_idx, row in enumerate(tqdm(self.train_loader)):
+                data, target = row[:, :-1], row[:, -1]
                 if torch.cuda.is_available():
-#                    print('using GPU')
+                    # print('using GPU')
                     data = data.cuda()
                 data = Variable(data)
+
                 self.optimizer.zero_grad()
-                recon_batch, mu, logvar = self.model.forward1(data)
-                loss = self.loss(recon_batch, data, mu, logvar)
+                pred = self.model.forward(data)
+                loss = self.loss(pred, target)
                 loss.backward()
                 self.optimizer.step()
                 loss_list.append(loss.data[0].item())
@@ -95,31 +91,23 @@ class Trainer:
         test_loss = 0
         mse_loss = 0
         kld_loss = 0
-        for i, (data, _) in enumerate(self.test_loader):
+        for i, row in enumerate(self.test_loader):
+            data, target = row[:, :-1], row[:, -1]
             if torch.cuda.is_available():
                 data = data.cuda()
             data = Variable(data)
-            recon_batch, mu, logvar = self.model.forward1(data)
-            test_loss += self.loss(recon_batch, data, mu, logvar).data[0]
-            mse_loss += self.loss.mse(recon_batch, data).data[0]
-            kld_loss += self.loss.kld(mu, logvar).data[0]
+
+            pred = self.model.forward(data)
+            test_loss += self.loss(pred, target).item()
 
         test_loss /= len(self.test_loader.dataset)
-        mse_loss /= len(self.test_loader.dataset)
-        kld_loss /= len(self.test_loader.dataset)
         print('====> Test set loss: {:.4f}'.format(test_loss))
-        print('====> Test set MSE loss: {:.4f}'.format(mse_loss))
-        print('====> Test set KLD loss: {:.4f}'.format(kld_loss))
         self.summary_writer.add_scalar('testing/loss', test_loss, cur_epoch)
-        self.summary_writer.add_scalar('testing/mseloss', mse_loss, cur_epoch)
-        self.summary_writer.add_scalar('testing/kldloss', kld_loss, cur_epoch)
         self.model.train()
         return test_loss
 
-
     def get_optimizer(self):
-        return optim.Adam(self.model.parameters(), lr=self.params['learning_rate'],
-                          weight_decay=self.params['weight_decay'])
+        return torch.optim.Adam(self.model.parameters(), lr=self.params['learning_rate'], weight_decay=self.params['weight_decay']) 
 
     def adjust_learning_rate(self, epoch):
         """Sets the learning rate to the initial LR multiplied by 0.98 every epoch"""
