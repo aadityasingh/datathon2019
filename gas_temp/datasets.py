@@ -24,8 +24,10 @@ class GasTempDataset(Dataset):
         mid = (end-start)/2+start
         dist = datetime(mid.year, 6, 21, 0, 0, 0) - mid
         shift = 2*math.pi/365*(dist.days+dist.seconds/3600)
-        value = math.cos(shift)
-        sample = {'input_vec': torch.from_numpy(self.data.iloc[idx][self.gases].values.astype(float)), 'output_num': self.data[idx]['avg_temp']}
+        scale = self.data[idx]['maxs']-self.data[idx]['mins']
+        temp_adjust = (math.cos(shift)+1)*scale/2 + self.data[idx]['mins']
+        model_temp = self.data[idx]['avg_temp']-temp_adjust
+        sample = {'input_vec': torch.from_numpy(self.data.iloc[idx][self.gases].values.astype(float)), 'output_num': model_temp}
 
         return sample
 
