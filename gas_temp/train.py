@@ -27,7 +27,7 @@ class Trainer:
             model: 
             params: hyperparameters and other settings
         """
-        self.model = model
+        self.model = model.double()
         self.params = params
         self.params['start_epoch'] = 0
 
@@ -48,7 +48,9 @@ class Trainer:
             print("epoch {}...".format(epoch))
             for batch_idx, batch in enumerate(tqdm(self.train_loader)):
                 data = batch['input_vec']
+                # print(data.shape)
                 target = batch['output_num']
+                # print(target.shape)
                 # if torch.cuda.is_available():
                 #     print('using GPU')
                 #     data = data.cuda()
