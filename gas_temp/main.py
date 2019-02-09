@@ -56,4 +56,7 @@ if __name__ == "__main__":
     parser = create_parser()
     opts = parser.parse_args()
 
-    train('../filter_pack_concentrations_weekly_cleaned.csv', opts)
+    train('../data_filled.csv', opts)
+
+
+
