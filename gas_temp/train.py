@@ -49,9 +49,9 @@ class Trainer:
             for batch_idx, batch in enumerate(tqdm(self.train_loader)):
                 data = batch['input_vec']
                 target = batch['output_num']
-                if torch.cuda.is_available():
-                    # print('using GPU')
-                    data = data.cuda()
+                # if torch.cuda.is_available():
+                #     print('using GPU')
+                #     data = data.cuda()
                 data = Variable(data)
 
                 self.optimizer.zero_grad()
@@ -94,8 +94,8 @@ class Trainer:
         kld_loss = 0
         for i, row in enumerate(self.test_loader):
             data, target = row[:, :-1], row[:, -1]
-            if torch.cuda.is_available():
-                data = data.cuda()
+            # if torch.cuda.is_available():
+            #     data = data.cuda()
             data = Variable(data)
 
             pred = self.model.forward(data)
