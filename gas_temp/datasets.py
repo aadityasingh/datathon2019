@@ -6,35 +6,23 @@ from skimage import io, transform
 import numpy as np
 from torch.utils.data import Dataset, DataLoader
 
-class PlantGasDataset(Dataset):
+class GasTempDataset(Dataset):
     """Face Landmarks dataset."""
 
-    def __init__(self, csv_plant, csv_gas, ins, outs, thresh=None):
-        self.gases = pd.read_csv(csv_gas)
-        self.plants = pd.read_csv(csv_plant)
-        self.thresh = thresh
-        self.inputs = dict()
-        self.outputs = dict()
-        for index, row in self.plants.iterrows():
-            to_inc = self.inputs.setdefault(row['city']+', '+row['state_name'], [0]*len(ins))
-            for i, source in enumerate(ins):
-                to_inc[i] += row[source]
-        for index, row in self.gases.iterrows():
-            
-
+    def __init__(self, csv, ins=[6,7,8,9,10,11,12,13,14,15,16], thresh=None):
+        self.data = pd.read_csv(csv)
+        self.thresh = thresh # FOR NOW WE ASSUME THRESH IS NONE
+        self.gas_nums = ins
+        self.gas_names = self.gases.columns[ins]
 
     def __len__(self):
-        return len(self.landmarks_frame)
+        return len(self.data)
 
     def __getitem__(self, idx):
-        img_name = os.path.join(self.root_dir,
-                                self.landmarks_frame.iloc[idx, 0])
-        image = io.imread(img_name)
-        landmarks = self.landmarks_frame.iloc[idx, 1:].as_matrix()
-        landmarks = landmarks.astype('float').reshape(-1, 2)
-        sample = {'image': image, 'landmarks': landmarks}
-
-        if self.transform:
-            sample = self.transform(sample)
+        sample = {'input_vec': self.data.iloc[idx, self.gas_nums].values, 'output_num': self.data[idx]['avg_temp']}
 
         return sample
+
+# Example use:
+# gtd = GasTempDataset("ReadFromMe.csv")
+# dataloader = DataLoader(gtd, batch_size=4, shuffle=True)
