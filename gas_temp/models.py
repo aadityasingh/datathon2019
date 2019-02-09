@@ -12,10 +12,10 @@ def linear(in_channels, out_channels, batch_norm=False):
     return nn.Sequential(*layers)
 
 class GasTempNet(nn.Module):
-    def __init__(self, hidden_dim, in_dims, out_dims):
+    def __init__(self, hidden_dim, in_dim, out_dim):
         super (GasTempNet, self).__init__()
-        self.input = linear(in_dims, hidden_dim)
-        self.output = linear(hidden_dim, out_dims)
+        self.input = linear(in_dim, hidden_dim)
+        self.output = linear(hidden_dim, out_dim)
 
     def forward(self, x):
         out = F.relu(self.input(x))
