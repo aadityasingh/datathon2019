@@ -19,11 +19,12 @@ class GasTempDataset(Dataset):
         return len(self.data)
 
     def __getitem__(self, idx):
-        start = datetime.strptime(data.iloc[idx]["date_on"], "%Y-%m-%d %H:%M:%S")
-        end = datetime.strptime(data.iloc[idx]["date_off"], "%Y-%m-%d %H:%M:%S")
+        start = datetime.strptime(self.data.iloc[idx]["date_on"], "%Y-%m-%d %H:%M:%S")
+        end = datetime.strptime(self.data.iloc[idx]["date_off"], "%Y-%m-%d %H:%M:%S")
         mid = (end-start)/2+start
         dist = datetime(mid.year, 6, 21, 0, 0, 0) - mid
         shift = 2*math.pi/365*(dist.days+dist.seconds/3600)
+        print(idx)
         scale = self.data[idx]['maxs']-self.data[idx]['mins']
         temp_adjust = (math.cos(shift)+1)*scale/2 + self.data[idx]['mins']
         model_temp = self.data[idx]['avg_temp']-temp_adjust
