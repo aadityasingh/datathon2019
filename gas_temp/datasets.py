@@ -4,25 +4,41 @@ import torch
 import pandas as pd
 from skimage import io, transform
 import numpy as np
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset
+from torch.utils.data.sampler import SubsetRandomSampler
 
 class GasTempDataset(Dataset):
-    """Face Landmarks dataset."""
 
-    def __init__(self, csv, ins=[6,7,8,9,10,11,12,13,14,15,16], thresh=None):
+    def __init__(self, csv, ins, thresh=None):
         self.data = pd.read_csv(csv)
         self.thresh = thresh # FOR NOW WE ASSUME THRESH IS NONE
-        self.gas_nums = ins
-        self.gas_names = self.gases.columns[ins]
+        self.gases = ins
 
     def __len__(self):
         return len(self.data)
 
     def __getitem__(self, idx):
-        sample = {'input_vec': self.data.iloc[idx, self.gas_nums].values, 'output_num': self.data[idx]['avg_temp']}
+        sample = {'input_vec': torch.from_numpy(self.data.iloc[idx][self.gases].values.astype(float)), 'output_num': self.data[idx]['avg_temp']}
 
         return sample
 
-# Example use:
-# gtd = GasTempDataset("ReadFromMe.csv")
-# dataloader = DataLoader(gtd, batch_size=4, shuffle=True)
+def make_data_loaders(path, ins, batch_size=16, val_split=0.2, thresh=None):
+    dataset = GasTempDataset(my_path)
+
+    # Creating data indices for training and validation splits:
+    dataset_size = len(dataset)
+    indices = list(range(dataset_size))
+    split = int(np.floor(val_split * dataset_size))
+    np.random.shuffle(indices)
+    train_indices, val_indices = indices[split:], indices[:split]
+
+    # Creating PT data samplers and loaders:
+    train_sampler = SubsetRandomSampler(train_indices)
+    valid_sampler = SubsetRandomSampler(val_indices)
+
+    train_loader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, 
+                                               sampler=train_sampler)
+    validation_loader = torch.utils.data.DataLoader(dataset, batch_size=batch_size,
+                                                    sampler=valid_sampler)
+    return train_loader, validation_loader
+

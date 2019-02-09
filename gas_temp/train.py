@@ -46,8 +46,9 @@ class Trainer:
         for epoch in range(self.params['start_epoch'], self.params['num_epochs']):
             loss_list = []
             print("epoch {}...".format(epoch))
-            for batch_idx, row in enumerate(tqdm(self.train_loader)):
-                data, target = row[:, :-1], row[:, -1]
+            for batch_idx, batch in enumerate(tqdm(self.train_loader)):
+                data = batch['input_vec']
+                target = batch['output_num']
                 if torch.cuda.is_available():
                     # print('using GPU')
                     data = data.cuda()
